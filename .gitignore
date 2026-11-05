@@ -1,0 +1,48 @@
+#   Derleme çıktıları: .NET’in bin/ ve obj/ klasörleri, Flutter’ın build/ ve .dart_tool/ klasörleri. Bunlar her derlemede yeniden oluşur; depoya konursa gereksiz yere şişirir ve çakışma çıkarır.
+#   Kişisel/IDE dosyaları: .vs/, .idea/, .vscode/, local.properties. Bunlar her bilgisayarda farklıdır; içlerinde senin bilgisayarındaki Android SDK yolu gibi bilgiler bulunur.
+#   Gizli bilgi riski olan dosyalar: .env, secrets.json vb. Asıl gizli bilgileri zaten user-secrets ile depo dışında tutacağız; bu satırlar ek bir güvenlik önlemi.
+
+
+# ---------- İşletim sistemi ----------
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# ---------- Editör / IDE ----------
+.vs/
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+
+# ---------- .NET (Web API) ----------
+bin/
+obj/
+*.log
+
+# ---------- Gizli bilgiler (ek önlem) ----------
+.env
+*.env
+secrets.json
+appsettings.*.local.json
+
+# ---------- Flutter / Dart ----------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+
+# ---------- Android ----------
+**/android/.gradle/
+**/android/local.properties
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+*.jks
+*.keystore
+key.properties
