@@ -1,3 +1,4 @@
+using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using TaskFlowApi.Data;
 
@@ -27,15 +28,32 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+// Controller'lardaki uç noktaları Swagger'ın görebilmesi için keşif servisi
+builder.Services.AddEndpointsApiExplorer();
+
+// Swagger dokümanını üret; başlık ve sürüm arayüzün üstünde görünür
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "TaskFlow Mobil API",
+        Version = "v1",
+        Description = "TaskFlow Mobil uygulaması için ekip, proje ve görev yönetimi Web API'si"
+    });
+});
+
+
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // OpenAPI JSON dosyasını /swagger/v1/swagger.json adresinde yayınla
+    app.UseSwagger();
+    // Bu JSON'u okuyup /swagger adresinde test arayüzünü göster
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
