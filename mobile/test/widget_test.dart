@@ -1,30 +1,26 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:taskflow_mobile/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  // Uygulama açıldığında açılış ekranı doğru görünüyor mu?
+  testWidgets('Açılış ekranı yükleniyor', (WidgetTester tester) async {
+    // Uygulamayı sanal ekranda çiz
+    await tester.pumpWidget(const TaskFlowApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Üst bardaki başlık ve karşılama metni
+    expect(find.text('TaskFlow Mobil'), findsOneWidget);
+    expect(find.text('Hoş geldin'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Kartların başlıkları
+    expect(find.text('API adresi'), findsOneWidget);
+    expect(find.text('Bağlantı'), findsOneWidget);
+    expect(find.text('Sürüm'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Henüz test yapılmadığı için başlangıç durumu
+    expect(find.text('Test edilmedi'), findsOneWidget);
+
+    // Alttaki test butonu
+    expect(find.text('API bağlantısını test et'), findsOneWidget);
   });
 }
