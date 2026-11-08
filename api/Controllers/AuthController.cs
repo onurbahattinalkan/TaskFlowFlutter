@@ -4,6 +4,9 @@ using TaskFlowApi.Dtos.Auth;
 using TaskFlowApi.Models;
 using TaskFlowApi.Services;
 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.JsonWebTokens;
+
 namespace TaskFlowApi.Controllers;
 
 // Adres: /api/auth/...
@@ -21,6 +24,7 @@ public class AuthController : ControllerBase
     }
 
     // POST /api/auth/register
+    [AllowAnonymous]
     [HttpPost("register")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -55,6 +59,7 @@ public class AuthController : ControllerBase
     }
 
     // POST /api/auth/login
+    [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -94,6 +99,40 @@ public class AuthController : ControllerBase
 
         return Ok(await CreateResponseAsync(user));
     }
+
+
+    // GET /api/auth/me — sadece giriş yapmış kullanıcılar.
+    // Bilgiler veritabanından değil, doğrulanmış token'dan okunur.
+    [Authorize]
+    [HttpGet("me")]
+    [ProducesResponseType(typeof(CurrentUserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public ActionResult<CurrentUserDto> Me()
+    {
+        return Ok(new CurrentUserDto
+        {
+            UserId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? string.Empty,
+            UserName = User.FindFirst(JwtRegisteredClaimNames.Name)?.Value ?? string.Empty,
+            Email = User.FindFirst(JwtRegisteredClaimNames.Email)?.Value ?? string.Empty,
+            FullName = User.FindFirst("fullName")?.Value ?? string.Empty,
+            Roles = User.FindAll("role").Select(c => c.Value).ToList()
+        });
+    }
+
+
+    // GET /api/auth/admin-check — rol bazlı yetkiyi test etmek için.
+    // Admin değilse 403 döner. Admin API'si (6. hafta) gelince kaldırılabilir.
+    [Authorize(Roles = AppRoles.Admin)]
+    [HttpGet("admin-check")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public IActionResult AdminCheck()
+    {
+        return Ok(new { message = $"Admin yetkisi doğrulandı: {User.Identity?.Name}" });
+    }
+
+
 
     // Identity hatalarını ModelState'e ekleyip standart 400 cevabı döner
     // (DTO doğrulama hatalarıyla aynı biçimde olsun diye)

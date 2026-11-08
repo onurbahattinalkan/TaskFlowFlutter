@@ -6,6 +6,12 @@ using TaskFlowApi.Models;
 using TaskFlowApi.Services;
 using TaskFlowApi.Settings;
 
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -77,6 +83,48 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 
 
 
+// Gelen isteklerdeki "Authorization: Bearer <token>" başlığını doğrula
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        // Token'daki kısa claim adlarını (sub, name, role) olduğu gibi kullan
+        options.MapInboundClaims = false;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            // Token'ı bizim API mi üretti?
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+
+            // Token bizim uygulama için mi?
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+
+            // İmza bizim gizli anahtarımızla mı atılmış? (değiştirilmiş token reddedilir)
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+
+            // Süresi dolmuş mu? Saat farkları için 1 dk tolerans
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+
+            // User.Identity.Name ve rol kontrolleri hangi claim'den okunsun
+            NameClaimType = "name",
+            RoleClaimType = "role"
+        };
+    });
+
+// Yetkilendirme: aksi belirtilmedikçe tüm uç noktalar giriş ister (secure by default)
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+
+
 
 // Controller'lardaki uç noktaları Swagger'ın görebilmesi için keşif servisi
 builder.Services.AddEndpointsApiExplorer();
@@ -109,6 +157,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Önce kim olduğunu belirle (token), sonra izinlerini kontrol et
+app.UseAuthentication();
 
 app.UseAuthorization();
 
