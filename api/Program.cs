@@ -2,6 +2,10 @@ using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using TaskFlowApi.Data;
 
+using Microsoft.AspNetCore.Identity;
+using TaskFlowApi.Models;
+
+using TaskFlowApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +31,34 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 
+
+// Identity: kullanıcı ve rol yönetimi (UserManager, RoleManager).
+// AddIdentity yerine AddIdentityCore: cookie tabanlı oturumu kurmaz,
+// çünkü API'miz JWT token ile çalışacak.
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        // Şifre kuralları (web projesiyle aynı)
+        options.Password.RequiredLength = 6;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+
+        // Aynı e-posta ile ikinci hesap açılamaz
+        options.User.RequireUniqueEmail = true;
+
+        // 5 hatalı şifre denemesinde hesap 5 dakika kilitlenir
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.AllowedForNewUsers = true;
+    })
+    // Admin / User rolleri için RoleManager'ı da ekle
+    .AddRoles<IdentityRole>()
+    // Kullanıcı ve rolleri AppDbContext üzerinden PostgreSQL'de sakla
+    .AddEntityFrameworkStores<AppDbContext>()
+    // Hata mesajlarını Türkçe olarak üret
+    .AddErrorDescriber<TurkishIdentityErrorDescriber>();
 
 
 // Controller'lardaki uç noktaları Swagger'ın görebilmesi için keşif servisi
