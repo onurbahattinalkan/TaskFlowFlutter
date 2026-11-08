@@ -138,6 +138,21 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "TaskFlow Mobil uygulaması için ekip, proje ve görev yönetimi Web API'si"
     });
+
+        // Sayfaya "Authorize" butonu ekle: API, HTTP Bearer ile JWT kullanıyor
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Giriş yaptıktan sonra dönen token'ı yapıştırın (başına 'Bearer' yazmayın)."
+    });
+
+    // Girilen token'ı tüm isteklere Authorization başlığı olarak ekle
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
 });
 
 
