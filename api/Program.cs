@@ -1,11 +1,10 @@
 using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using TaskFlowApi.Data;
-
 using Microsoft.AspNetCore.Identity;
 using TaskFlowApi.Models;
-
 using TaskFlowApi.Services;
+using TaskFlowApi.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +58,24 @@ builder.Services
     .AddEntityFrameworkStores<AppDbContext>()
     // Hata mesajlarını Türkçe olarak üret
     .AddErrorDescriber<TurkishIdentityErrorDescriber>();
+
+
+
+// "Jwt" bölümünü JwtSettings sınıfına bağla (Options pattern)
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+// Anahtar yoksa veya çok kısaysa uygulama anlaşılır bir hatayla dursun
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+if (jwtSettings is null || jwtSettings.Key.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JWT anahtarı bulunamadı veya çok kısa. 'dotnet user-secrets set \"Jwt:Key\" ...' ile ayarlayın.");
+}
+
+// Token servisi: her HTTP isteği için bir örnek oluşturulur
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+
 
 
 // Controller'lardaki uç noktaları Swagger'ın görebilmesi için keşif servisi
