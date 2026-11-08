@@ -1,17 +1,15 @@
 import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
+import 'auth_interceptor.dart';
+import 'token_storage.dart';
 
-// Uygulamanın tüm HTTP istekleri bu tek Dio nesnesi üzerinden gidecek
-/*
-Tek bir Dio nesnesi kullanmamızın nedeni: eklenecek JWT interceptor bir kez buraya yazılacak ve tüm isteklere otomatik uygulanacak. ApiService iskeleti de bu nesneyi kullanacak.
-*/
-
+// Uygulamanın tüm HTTP istekleri bu tek Dio nesnesi üzerinden gider.
+// JWT interceptor bir kez buraya eklenir ve tüm isteklere uygulanır.
 class ApiClient {
   ApiClient._();
 
-  // Ortak ayarlar: temel adres, zaman aşımları, JSON başlığı.
-  // Token ekleyen interceptor ileride buraya eklenecek.
+  // Ortak ayarlar: temel adres, zaman aşımları, JSON başlığı
   static final Dio dio = Dio(
     BaseOptions(
       baseUrl: AppConfig.apiBaseUrl,
@@ -20,4 +18,16 @@ class ApiClient {
       headers: {'Content-Type': 'application/json'},
     ),
   );
+
+  // Uygulama açılırken bir kez çağrılır (main.dart)
+  static void attachAuth({
+    required TokenStorage storage,
+    required Future<void> Function() onUnauthorized,
+  }) {
+    // İki kez eklenirse her isteğe iki kez işlem yapılmasın
+    dio.interceptors.removeWhere((i) => i is AuthInterceptor);
+    dio.interceptors.add(
+      AuthInterceptor(storage: storage, onUnauthorized: onUnauthorized),
+    );
+  }
 }

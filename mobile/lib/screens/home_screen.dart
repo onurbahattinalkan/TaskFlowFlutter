@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
+import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
 import '../widgets/status_chip.dart';
 
@@ -22,7 +24,31 @@ class _HomeScreenState extends State<HomeScreen> {
   ConnectionStatus _status = ConnectionStatus.notTested;
   String _detail = 'Henüz test edilmedi';
 
-  // API'ye örnek bir istek atar ve sonucu ekrana yansıtır
+  // Çıkıştan önce onay sor; onaylanırsa router giriş ekranına yönlendirir
+  Future<void> _confirmLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Çıkış'),
+        content: const Text('Oturumunu kapatmak istediğine emin misin?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Çıkış Yap'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    await context.read<AuthProvider>().logout();
+  }
+
+  // Giriş gerektiren bir uç noktaya istek atar ve sonucu ekrana yansıtır
   Future<void> _testConnection() async {
     setState(() {
       _status = ConnectionStatus.testing;
@@ -30,16 +56,17 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      // baseUrl ApiClient'ta tanımlı; burada sadece yolu veriyoruz
-      final response = await ApiClient.dio.get('/WeatherForecast');
-      final itemCount = (response.data as List).length;
+      // Giriş gerektiren uç nokta: token interceptor ile otomatik eklenir
+      final response = await ApiClient.dio.get('/api/auth/me');
+      final userName = (response.data as Map<String, dynamic>)['userName'];
       final time = DateFormat('HH:mm:ss').format(DateTime.now());
 
       // İstek sürerken ekrandan çıkıldıysa setState çağırma
       if (!mounted) return;
       setState(() {
         _status = ConnectionStatus.success;
-        _detail = 'HTTP ${response.statusCode}, $itemCount kayıt • $time';
+        _detail =
+            'HTTP ${response.statusCode}, "$userName" olarak doğrulandı • $time';
       });
     } on DioException catch (e) {
       if (!mounted) return;
@@ -96,8 +123,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final textTheme = Theme.of(context).textTheme;
     final isTesting = _status == ConnectionStatus.testing;
 
+    // Giriş yapan kullanıcı; değişirse ekran yeniden çizilir
+    final user = context.watch<AuthProvider>().user;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('TaskFlow Mobil')),
+      appBar: AppBar(
+        title: const Text('TaskFlow Mobil'),
+        actions: [
+          IconButton(
+            tooltip: 'Çıkış yap',
+            icon: const Icon(Icons.logout),
+            onPressed: _confirmLogout,
+          ),
+        ],
+      ),
       body: SafeArea(
         // Tablette içerik ortada, en fazla 480 piksel genişlikte dursun
         child: Align(
@@ -111,7 +150,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      Text('Hoş geldin', style: textTheme.headlineSmall),
+                      Text(
+                        user == null
+                            ? 'Hoş geldin'
+                            : 'Hoş geldin, ${user.fullName}',
+                        style: textTheme.headlineSmall,
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'Geliştirme durumu',
@@ -145,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           leading:
                               Icon(Icons.phone_android, color: colors.primary),
                           title: const Text('Sürüm'),
-                          subtitle: const Text('1. hafta iskeleti'),
+                          subtitle: const Text('3. hafta: giriş ve oturum'),
                         ),
                       ),
                     ],
