@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TaskFlowApi.Controllers;
 
+
+// Mobil uygulamadaki bağlantı testi token olmadan çağırıyor
+[Microsoft.AspNetCore.Authorization.AllowAnonymous] 
 [ApiController]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase

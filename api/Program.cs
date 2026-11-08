@@ -1,6 +1,15 @@
 using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using TaskFlowApi.Data;
+using Microsoft.AspNetCore.Identity;
+using TaskFlowApi.Models;
+using TaskFlowApi.Services;
+using TaskFlowApi.Settings;
+
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +37,94 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 
+// Identity: kullanıcı ve rol yönetimi (UserManager, RoleManager).
+// AddIdentity yerine AddIdentityCore: cookie tabanlı oturumu kurmaz,
+// çünkü API'miz JWT token ile çalışacak.
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        // Şifre kuralları (web projesiyle aynı)
+        options.Password.RequiredLength = 6;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+
+        // Aynı e-posta ile ikinci hesap açılamaz
+        options.User.RequireUniqueEmail = true;
+
+        // 5 hatalı şifre denemesinde hesap 5 dakika kilitlenir
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.AllowedForNewUsers = true;
+    })
+    // Admin / User rolleri için RoleManager'ı da ekle
+    .AddRoles<IdentityRole>()
+    // Kullanıcı ve rolleri AppDbContext üzerinden PostgreSQL'de sakla
+    .AddEntityFrameworkStores<AppDbContext>()
+    // Hata mesajlarını Türkçe olarak üret
+    .AddErrorDescriber<TurkishIdentityErrorDescriber>();
+
+
+
+// "Jwt" bölümünü JwtSettings sınıfına bağla (Options pattern)
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+// Anahtar yoksa veya çok kısaysa uygulama anlaşılır bir hatayla dursun
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+if (jwtSettings is null || jwtSettings.Key.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JWT anahtarı bulunamadı veya çok kısa. 'dotnet user-secrets set \"Jwt:Key\" ...' ile ayarlayın.");
+}
+
+// Token servisi: her HTTP isteği için bir örnek oluşturulur
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+
+
+// Gelen isteklerdeki "Authorization: Bearer <token>" başlığını doğrula
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        // Token'daki kısa claim adlarını (sub, name, role) olduğu gibi kullan
+        options.MapInboundClaims = false;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            // Token'ı bizim API mi üretti?
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings.Issuer,
+
+            // Token bizim uygulama için mi?
+            ValidateAudience = true,
+            ValidAudience = jwtSettings.Audience,
+
+            // İmza bizim gizli anahtarımızla mı atılmış? (değiştirilmiş token reddedilir)
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+
+            // Süresi dolmuş mu? Saat farkları için 1 dk tolerans
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+
+            // User.Identity.Name ve rol kontrolleri hangi claim'den okunsun
+            NameClaimType = "name",
+            RoleClaimType = "role"
+        };
+    });
+
+// Yetkilendirme: aksi belirtilmedikçe tüm uç noktalar giriş ister (secure by default)
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+
+
 
 // Controller'lardaki uç noktaları Swagger'ın görebilmesi için keşif servisi
 builder.Services.AddEndpointsApiExplorer();
@@ -47,6 +144,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Açılışta rolleri ve admin hesabını oluştur (zaten varsa dokunmaz)
+await DbSeeder.SeedAsync(app.Services);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -57,6 +157,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Önce kim olduğunu belirle (token), sonra izinlerini kontrol et
+app.UseAuthentication();
 
 app.UseAuthorization();
 
