@@ -4,6 +4,7 @@ import '../models/json_dates.dart';
 import '../models/project.dart';
 import 'api_client.dart';
 import 'api_exception.dart';
+import '../models/auth_user.dart';
 
 // Uygulamanın API ile konuştuğu tek yer.
 // Ekranlar bu sınıfın metotlarını çağırır; adresler ve JSON dönüşümü burada.
@@ -12,6 +13,44 @@ class ApiService {
 
   // Varsayılan olarak ortak Dio nesnesi; testte farklı bir Dio verilebilir
   ApiService({Dio? dio}) : _dio = dio ?? ApiClient.dio;
+
+
+
+
+  // ---------- Kimlik doğrulama ----------
+
+  // POST /api/auth/login (giriş e-posta ile)
+  Future<AuthResponse> login({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _send(() => _dio.post('/api/auth/login', data: {
+          'email': email,
+          'password': password,
+        }));
+    return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // POST /api/auth/register (kayıt olan doğrudan giriş yapmış sayılır)
+  Future<AuthResponse> register({
+    required String fullName,
+    required String userName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final response = await _send(() => _dio.post('/api/auth/register', data: {
+          'fullName': fullName,
+          'userName': userName,
+          'email': email,
+          'password': password,
+          'confirmPassword': confirmPassword,
+        }));
+    return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+
+
 
   // ---------- Projeler ----------
 
