@@ -1,9 +1,12 @@
 import 'package:go_router/go_router.dart';
 import '../screens/teams_screen.dart';
 
+import '../models/project.dart';
 import '../providers/auth_provider.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/project_form_screen.dart';
+import '../screens/project_list_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/team_detail_screen.dart';
@@ -11,6 +14,11 @@ import '../screens/team_detail_screen.dart';
 // Ekran adresleri; yazım hatası olmasın diye sabit
 class AppRoutes {
   AppRoutes._();
+
+  // ---------- Projeler (Onur, 4. hafta) ----------
+  static const projects = '/projects';
+  static const projectNew = '/projects/new';
+  static String projectEdit(int id) => '/projects/$id/edit';
 
   static const splash = '/splash';
   static const login = '/login';
@@ -62,6 +70,27 @@ GoRouter createRouter(AuthProvider auth) {
         path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
       ),
+      // ---------- Projeler (Onur, 4. hafta) ----------
+      GoRoute(
+        path: AppRoutes.projects,
+        builder: (context, state) => const ProjectListScreen(),
+        routes: [
+          // /projects/new
+          GoRoute(
+            path: 'new',
+            builder: (context, state) => const ProjectFormScreen(),
+          ),
+          // /projects/5/edit (proje listeden extra ile gelir)
+          GoRoute(
+            path: ':id/edit',
+            builder: (context, state) => ProjectFormScreen(
+              projectId: int.parse(state.pathParameters['id']!),
+              initialProject: state.extra as Project?,
+            ),
+          ),
+        ],
+      ),
+
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const HomeScreen(),

@@ -1,16 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../config/app_config.dart';
+import '../config/app_router.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
 import '../widgets/status_chip.dart';
-
-import 'package:go_router/go_router.dart';
-import '../config/app_router.dart';
-
 
 // API bağlantı testinin olası durumları
 enum ConnectionStatus { notTested, testing, success, failure }
@@ -207,6 +205,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icon(Icons.phone_android, color: colors.primary),
                           title: const Text('Sürüm'),
                           subtitle: const Text('3. hafta: giriş ve oturum'),
+                        ),
+                      ),
+
+                      // Projeler ekranına geçiş (Onur, 4. hafta)
+                      Card(
+                        child: ListTile(
+                          leading:
+                              Icon(Icons.folder_outlined, color: colors.primary),
+                          title: const Text('Projeler'),
+                          subtitle: const Text('Listele, ekle, düzenle, sil'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push(AppRoutes.projects),
                         ),
                       ),
                     ],
