@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../screens/teams_screen.dart';
 
 import '../providers/auth_provider.dart';
 import '../screens/home_screen.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const home = '/';
+  static const teams = '/teams';
 }
 
 // Oturum durumuna göre yönlendiren router.
@@ -61,6 +63,11 @@ GoRouter createRouter(AuthProvider auth) {
         path: AppRoutes.home,
         builder: (context, state) => const HomeScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.teams,
+        builder: (context, state) => const TeamsScreen(),
+      ),
+    
     ],
   );
 }

@@ -8,6 +8,10 @@ import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
 import '../widgets/status_chip.dart';
 
+import 'package:go_router/go_router.dart';
+import '../config/app_router.dart';
+
+
 // API bağlantı testinin olası durumları
 enum ConnectionStatus { notTested, testing, success, failure }
 
@@ -167,11 +171,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       // --dart-define ile verilen API adresi
                       Card(
                         child: ListTile(
+                          leading: Icon(Icons.groups, color: colors.primary),
+                          title: const Text('Ekiplerim'),
+                          subtitle: const Text('Ekip kur, üyeleri yönet'),
+                          trailing: const Icon(Icons.chevron_right),
+                          // push: geri tuşuyla ana sayfaya dönülebilsin
+                          onTap: () => context.push(AppRoutes.teams),
+                        ),
+                      ),
+                      
+                      // --dart-define ile verilen API adresi
+                      Card(
+                        child: ListTile(
                           leading: Icon(Icons.link, color: colors.primary),
                           title: const Text('API adresi'),
                           subtitle: Text(AppConfig.apiBaseUrl),
                         ),
                       ),
+
 
                       // Son bağlantı testinin sonucu
                       Card(
