@@ -6,6 +6,8 @@ import 'api_client.dart';
 import 'api_exception.dart';
 import '../models/auth_user.dart';
 
+import '../models/team.dart';
+
 // Uygulamanın API ile konuştuğu tek yer.
 // Ekranlar bu sınıfın metotlarını çağırır; adresler ve JSON dönüşümü burada.
 class ApiService {
@@ -112,6 +114,59 @@ class ApiService {
   Future<void> deleteProject(int id) async {
     await _send(() => _dio.delete('/api/projects/$id'));
   }
+
+
+
+
+  // ---------- Ekipler ----------
+
+  // GET /api/teams (kullanıcının ekipleri; Admin için tüm ekipler)
+  Future<List<Team>> getTeams() async {
+    final response = await _send(() => _dio.get('/api/teams'));
+
+    final list = response.data as List<dynamic>;
+    return list
+        .map((item) => Team.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  // GET /api/teams/{id} (ekip + üyeler)
+  Future<TeamDetail> getTeam(int id) async {
+    final response = await _send(() => _dio.get('/api/teams/$id'));
+    return TeamDetail.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // POST /api/teams (kuran kişi otomatik Lider olur)
+  Future<TeamDetail> createTeam({
+    required String name,
+    String? description,
+  }) async {
+    final response = await _send(() => _dio.post('/api/teams', data: {
+          'name': name,
+          'description': description,
+        }));
+    return TeamDetail.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // POST /api/teams/{id}/members (sadece Lider; kullanıcı adı veya e-posta ile)
+  Future<TeamDetail> addTeamMember(int teamId, String userNameOrEmail) async {
+    final response = await _send(() => _dio.post(
+          '/api/teams/$teamId/members',
+          data: {'userNameOrEmail': userNameOrEmail},
+        ));
+    return TeamDetail.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  // POST /api/teams/{id}/transfer-leadership (sadece Lider)
+  Future<TeamDetail> transferLeadership(int teamId, String newLeaderUserId) async {
+    final response = await _send(() => _dio.post(
+          '/api/teams/$teamId/transfer-leadership',
+          data: {'newLeaderUserId': newLeaderUserId},
+        ));
+    return TeamDetail.fromJson(response.data as Map<String, dynamic>);
+  }
+
+
 
   // ---------- Ortak ----------
 

@@ -80,7 +80,8 @@ if (jwtSettings is null || jwtSettings.Key.Length < 32)
 
 // Token servisi: her HTTP isteği için bir örnek oluşturulur
 builder.Services.AddScoped<ITokenService, TokenService>();
-
+// Ekip içi yetki servisi (üye mi / lider mi); DbContext gibi istek başına bir örnek
+builder.Services.AddScoped<ITeamAuthorizationService, TeamAuthorizationService>();
 
 
 // Gelen isteklerdeki "Authorization: Bearer <token>" başlığını doğrula
