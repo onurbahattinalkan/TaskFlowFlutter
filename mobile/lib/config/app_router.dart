@@ -1,10 +1,12 @@
 import 'package:go_router/go_router.dart';
+import '../screens/teams_screen.dart';
 
 import '../providers/auth_provider.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/splash_screen.dart';
+import '../screens/team_detail_screen.dart';
 
 // Ekran adresleri; yazım hatası olmasın diye sabit
 class AppRoutes {
@@ -14,6 +16,9 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const home = '/';
+  static const teams = '/teams';
+    // Ekip Detayı adresi: /teams/3
+  static String teamDetail(int id) => '$teams/$id';
 }
 
 // Oturum durumuna göre yönlendiren router.
@@ -60,6 +65,21 @@ GoRouter createRouter(AuthProvider auth) {
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const HomeScreen(),
+      ),
+            GoRoute(
+        path: AppRoutes.teams,
+        builder: (context, state) => const TeamsScreen(),
+        routes: [
+        // Alt adres: /teams/3 → Ekip Detayı (geri tuşu listeye döner)
+        GoRoute(
+          path: ':id',
+          builder: (context, state) {
+            // Sayı değilse 0 → API "Ekip bulunamadı." döner, ekran gösterir
+            final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+            return TeamDetailScreen(teamId: id);
+          },
+        ),
+        ],
       ),
     ],
   );
