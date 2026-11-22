@@ -122,10 +122,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
   // GEÇİCİ: Ekip listesini Zeynep'in GET /api/teams uç noktası sağlayacak.
   // Birleştirmeden sonra gövde sadece şu olacak:  return _api.getTeams();
-  Future<List<Team>> _loadTeams() async {
-    return const [
-      Team(id: 1, name: 'Deneme Ekibi'),
-    ];
+    // Kullanıcının ekipleri (GET /api/teams); Admin için tüm ekipler
+  Future<List<Team>> _loadTeams() {
+    return _api.getTeams();
   }
 
   // Düzenlemede mevcut değerleri forma yazar

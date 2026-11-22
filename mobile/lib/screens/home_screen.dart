@@ -10,10 +10,6 @@ import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
 import '../widgets/status_chip.dart';
 
-import 'package:go_router/go_router.dart';
-import '../config/app_router.dart';
-
-
 // API bağlantı testinin olası durumları
 enum ConnectionStatus { notTested, testing, success, failure }
 
