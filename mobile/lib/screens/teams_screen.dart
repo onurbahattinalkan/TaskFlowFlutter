@@ -9,6 +9,10 @@ import '../widgets/create_team_dialog.dart';
 import '../widgets/error_banner.dart';
 import '../widgets/status_chip.dart';
 
+import 'package:go_router/go_router.dart';
+
+import '../config/app_router.dart';
+
 // "Ekiplerim" ekranı: kullanıcının ekipleri (Admin için tüm ekipler)
 class TeamsScreen extends StatefulWidget {
   const TeamsScreen({super.key});
@@ -208,7 +212,11 @@ class _TeamsScreenState extends State<TeamsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     trailing: _roleChip(team, isAdmin, colors),
-                    // Ekip Detayı'na geçiş 6. adımda eklenecek
+                                        // Detaya git; dönünce üye sayısı/rol değişmiş olabilir, listeyi yenile
+                    onTap: () async {
+                      await context.push(AppRoutes.teamDetail(team.id));
+                      if (mounted) _loadTeams(showSpinner: false);
+                    },
                   ),
                 );
               },
