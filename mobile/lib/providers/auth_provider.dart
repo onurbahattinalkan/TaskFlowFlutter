@@ -32,7 +32,13 @@ class AuthProvider extends ChangeNotifier {
 
   // Uygulama açılırken bir kez çağrılır: kayıtlı oturumu geri yükler
   Future<void> init() async {
-    final token = await _storage.readToken();
+  String? token;
+    try {
+      token = await _storage.readToken();
+    } catch (_) {
+      // Depo okunamazsa yükleniyor ekranında kalmasın, giriş ekranına düşsün
+      token = null;
+    }
 
     if (token == null || !_isValid(token)) {
       // Süresi dolmuş/bozuk token cihazda kalmasın

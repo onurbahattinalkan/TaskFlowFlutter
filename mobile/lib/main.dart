@@ -10,7 +10,10 @@ import 'services/token_storage.dart';
 
 // Uygulamanın başlangıç noktası
 void main() {
+  // Flutter'ın platformla (secure storage) konuşabilmesi için runApp'tan önce şart
+  WidgetsFlutterBinding.ensureInitialized();
   // Interceptor ve AuthProvider aynı token deposunu kullanır
+
   final storage = TokenStorage();
   final auth = AuthProvider(storage: storage);
 
